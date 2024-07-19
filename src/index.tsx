@@ -1,7 +1,7 @@
 /* @refresh reload */
 import { render } from "solid-js/web"
 import "./index.css"
-import Cube from "./game/base.tsx"
+import "./game/base.tsx"
 
 const App = () => {
 	return (
@@ -9,7 +9,6 @@ const App = () => {
 			<div>
 				<h1>Hello, Solid!</h1>
 			</div>
-			<Cube />
 		</>
 	)
 }
