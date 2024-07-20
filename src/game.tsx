@@ -2,7 +2,7 @@ import { Environment, KeyboardControls, OrbitControls, useGLTF, useKeyboardContr
 import { Canvas, useFrame } from "@react-three/fiber"
 import React, { Suspense, useRef } from "react"
 import * as THREE from "three"
-
+import { Physics, RigidBody } from "@react-three/rapier";
 type GameplayState = "Active" | "Paused" | "GameOver"
 
 interface GameProps {
@@ -29,8 +29,12 @@ const Model = ({ gameplayState = "Active" }) => {
 
 	return (
 		<>
-			<primitive object={gltf.scene} scale={0.4} />
-			<primitive object={gltf2.scene} scale={0.4} ref={modelRef} />
+			<RigidBody type="fixed" position={[0, -0.5, 0]}>
+				<primitive object={gltf.scene} scale={2} />
+			</RigidBody>
+			<RigidBody colliders={'cuboid'} position={[0, 1, 0]}>
+				<primitive object={gltf2.scene} scale={0.4} ref={modelRef} />
+			</RigidBody>
 		</>
 	)
 }
@@ -51,12 +55,14 @@ const Game: React.FC<GameProps> = ({ onExit }) => {
 			>
 				<Canvas camera={{ position: [0, 5, 10], fov: 50 }}>
 					<Suspense fallback={null}>
-						<Model gameplayState={gameplayState} />
-						<Environment preset="city" />
-						<OrbitControls />
-						<fog attach="fog" args={["blue", 0, 50]} />
-						<ambientLight intensity={0.5} />
-						<pointLight position={[10, 10, 10]} />
+						<Physics debug>
+							<Model gameplayState={gameplayState} />
+							<Environment preset="city" />
+							<OrbitControls />
+							<fog attach="fog" args={["blue", 0, 50]} />
+							<ambientLight intensity={0.5} />
+							<pointLight position={[10, 10, 10]} />
+						</Physics>
 					</Suspense>
 				</Canvas>
 			</KeyboardControls>
