@@ -1,9 +1,10 @@
 import React from "react"
+import Dialog from "./ui/dialog"
 
 interface MainMenuProps {
-	onNewGame: () => string
-	onCredits: () => string
-	onExit: () => string
+	onNewGame: Function
+	onCredits: Function
+	onExit: Function
 }
 
 const MainMenu: React.FC<MainMenuProps> = ({ onNewGame, onCredits, onExit }) => {
@@ -14,7 +15,7 @@ const MainMenu: React.FC<MainMenuProps> = ({ onNewGame, onCredits, onExit }) => 
 	}
 	return (
 		<div className="flex flex-col gap-24 justify-center items-center w-full h-full fade-in">
-			<img src="/ui/unearthed_logo.png" className="h-32 logo" />
+			<img src="/ui/unearthed_logo.png" className="h-16   md:h-32 logo" />
 			<div className="flex flex-col text-2xl">
 				{Object.keys(MenuItems).map((item, index) => (
 					<button

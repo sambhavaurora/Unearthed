@@ -2,7 +2,7 @@ import "./index.css"
 import React, { useState } from "react"
 import { createRoot } from "react-dom/client"
 import Credits from "./credits"
-import Game from "./game"
+import Game from "./game/game.tsx"
 import MainMenu from "./mainMenu.tsx"
 
 type GameState = "menu" | "playing" | "credits"
