@@ -1,43 +1,28 @@
-import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { Environment, OrbitControls } from "@react-three/drei"
+import { Canvas } from "@react-three/fiber"
+import { useLoader } from "@react-three/fiber"
+import { Suspense } from "react"
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js"
 
-// Create a scene
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xFFFFFF);
-
-// Create a camera
-const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.z = 5;
-
-// Create a renderer
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
-
-// add lighting
-const light = new THREE.AmbientLight(0xffffff);
-scene.add(light);
-
-// Create orbit controls
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.dampingFactor = 0.25;
-controls.enableZoom = true;
-
-// Load the GLTF model
-const loader = new GLTFLoader();
-loader.load('models/scene.gltf', async (gltf) => {
-	console.log(gltf);
-	const model = gltf.scene
-	await renderer.compileAsync(model, camera, scene);
-
-	scene.add(model);
-});
-
-// Render the scene
-function animate() {
-	requestAnimationFrame(animate);
-	renderer.render(scene, camera);
+const Model = () => {
+	const gltf = useLoader(GLTFLoader, "/models/scene.gltf")
+	return (
+		<>
+			<primitive object={gltf.scene} scale={0.4} />
+		</>
+	)
 }
-animate();
+
+export default function App() {
+	return (
+		<div className="App h-[100vh] w-[100vw]">
+			<Canvas>
+				<Suspense fallback={null}>
+					<Model />
+					<OrbitControls />
+					<Environment preset="city" />
+				</Suspense>
+			</Canvas>
+		</div>
+	)
+}

@@ -1,16 +1,46 @@
-/* @refresh reload */
-import { render } from "solid-js/web"
 import "./index.css"
-import "./game/base.tsx"
+import React, { useState } from "react"
+import { createRoot } from "react-dom/client"
+import Credits from "./credits"
+import Game from "./game"
+import MainMenu from "./mainMenu.tsx"
 
-const App = () => {
+type GameState = "menu" | "playing" | "credits"
+
+const App: React.FC = () => {
+	const [gameState, setGameState] = useState<GameState>("menu")
+
+	const startNewGame = () => {
+		setGameState("playing")
+	}
+
+	const showCredits = () => {
+		setGameState("credits")
+	}
+
+	const exitGame = () => {
+		if (window.confirm("Are you sure you want to exit the game?")) {
+			window.close()
+		}
+	}
+
+	const returnToMainMenu = () => {
+		setGameState("menu")
+	}
+
 	return (
 		<>
-			<div>
-				<h1>Hello, Solid!</h1>
-			</div>
+			{gameState === "menu" && (
+				<MainMenu
+					onNewGame={startNewGame}
+					onCredits={showCredits}
+					onExit={exitGame}
+				/>
+			)}
+			{gameState === "playing" && <Game onExit={returnToMainMenu} />}
+			{gameState === "credits" && <Credits onBack={returnToMainMenu} />}
 		</>
 	)
 }
 
-render(App, document.body)
+createRoot(document.body).render(<App />)
