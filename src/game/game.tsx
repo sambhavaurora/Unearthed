@@ -110,7 +110,7 @@ const Model = ({ gameplayState = "Active" }) => {
 			<RigidBody type="fixed" position={[0, -10, 0]} colliders= "trimesh">
 				<primitive object={gltf.scene} scale={2}  />
 			</RigidBody>
-			<RigidBody ref={rigidBodyRef} colliders="hull" position={[0, 1, 0]} restitution={0.2} friction={0.4}>
+			<RigidBody ref={rigidBodyRef} colliders="cuboid" position={[0, 1, 0]}>
 				<primitive object={gltf2.scene} scale={1} />
 			</RigidBody>
 			{/* <FollowCamera target={rigidBodyRef} /> */}
