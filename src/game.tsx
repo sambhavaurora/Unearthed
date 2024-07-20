@@ -11,6 +11,7 @@ interface GameProps {
 
 const Model = ({ gameplayState = "Active" }) => {
 	const gltf = useGLTF("/models/meow.glb")
+	const gltf2 = useGLTF("/models/scene.gltf")
 	const modelRef = useRef<THREE.Object3D>(null)
 	const [, getKeys] = useKeyboardControls()
 
@@ -26,7 +27,12 @@ const Model = ({ gameplayState = "Active" }) => {
 		}
 	})
 
-	return <primitive object={gltf.scene} scale={0.4} ref={modelRef} />
+	return (
+		<>
+			<primitive object={gltf.scene} scale={0.4} />
+			<primitive object={gltf2.scene} scale={0.4} ref={modelRef} />
+		</>
+	)
 }
 
 const Game: React.FC<GameProps> = ({ onExit }) => {
@@ -48,7 +54,7 @@ const Game: React.FC<GameProps> = ({ onExit }) => {
 						<Model gameplayState={gameplayState} />
 						<Environment preset="city" />
 						<OrbitControls />
-						<fog attach="fog" args={["white", 0, 100]} />
+						<fog attach="fog" args={["blue", 0, 50]} />
 						<ambientLight intensity={0.5} />
 						<pointLight position={[10, 10, 10]} />
 					</Suspense>
