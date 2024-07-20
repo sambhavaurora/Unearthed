@@ -1,9 +1,9 @@
 import React from "react"
 
 interface MainMenuProps {
-	onNewGame: () => void
-	onCredits: () => void
-	onExit: () => void
+	onNewGame: () => string
+	onCredits: () => string
+	onExit: () => string
 }
 
 const MainMenu: React.FC<MainMenuProps> = ({ onNewGame, onCredits, onExit }) => {
