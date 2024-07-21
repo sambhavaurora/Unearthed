@@ -129,7 +129,7 @@ const Game: React.FC<GameProps> = ({ onExit }) => {
 			>
 				<Canvas camera={{ position: [0, 5, 10], fov: 90 }}>
 					<Suspense fallback={null}>
-						<Physics>
+						<Physics debug>
 							<Scene />
 							<Player gameplayState={gameplayState} />
 							<Environment preset="night" />
