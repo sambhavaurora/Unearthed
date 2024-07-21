@@ -18,6 +18,7 @@ const FirstPersonCamera = ({ playerRef }: { playerRef: React.MutableRefObject<an
 			}
 		}
 
+        yawRef.current.rotation.y = Math.PI * 1.5
 		document.addEventListener("mousemove", handleMouseMove)
 		return () => document.removeEventListener("mousemove", handleMouseMove)
 	}, [])

@@ -26,11 +26,7 @@ const Player = ({ gameplayState = "Active" }) => {
 	const [, getKeys] = useKeyboardControls()
 
 	const velocity = new THREE.Vector3()
-	const maxVelocity = 3 // Adjust this value to set maximum speed
-	const entranceDirection = new THREE.Vector3(0, 0, -1);
-	const playerDirection = new THREE.Vector3(0, 0, 1);
-	const rotationAngle = playerDirection.angleTo(entranceDirection);
-	const initialRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), rotationAngle)
+	const maxVelocity = 3
 	useEffect(() => {
 		const canvas = document.querySelector("canvas")
 		if (canvas) {
@@ -39,9 +35,7 @@ const Player = ({ gameplayState = "Active" }) => {
 			})
 		}
 
-		if (playerRef.current) {
-			playerRef.current.setRotation(initialRotation)
-		}
+
 	}, [playerRef.current])
 
 	useFrame((state, delta) => {
@@ -82,17 +76,12 @@ const Player = ({ gameplayState = "Active" }) => {
 			if (jump && Math.abs(currentVel.y) < 0.05) {
 				playerRef.current.setLinvel({ x: currentVel.x, y: 5, z: currentVel.z })
 			}
-
-			// Rotate the player to face the camera direction
-			const lookAtVector = new THREE.Vector3(cameraForward.x, 0, cameraForward.z).normalize()
-			const playerRotation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), lookAtVector)
-			playerRef.current.setRotation(playerRotation)
 		}
 	})
 
 	return (
 		<>
-			<RigidBody ref={playerRef} colliders="ball" position={[-32, 1, 0]} mass={1}>
+			<RigidBody ref={playerRef} colliders="ball" position={[-32, 1, 0]} mass={1} rotation={new THREE.Euler(0, Math.PI, 0)}>
 				<mesh>
 					<capsuleGeometry args={[0.5, 1, 4, 8]} />
 					<meshStandardMaterial color="blue" />
@@ -140,8 +129,8 @@ const Game: React.FC<GameProps> = ({ onExit }) => {
 							<Scene />
 							<Player gameplayState={gameplayState} />
 							<Environment preset="night" />
-							<fog attach="fog" args={["#001020", -25, 50]} />
-							<ambientLight intensity={1} />
+							<fog attach="fog" args={["#001020", -10, 10]} />
+							<ambientLight intensity={2.5} />
 							{/* <pointLight position={[0, 100, 0]} castShadow /> */}
 						</Physics>
 					</Suspense>
