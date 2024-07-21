@@ -11,7 +11,7 @@ type GameplayState = "Active" | "Paused" | "GameOver"
 interface GameProps {
 	onExit: Function
 }
-const Scene = ({}) => {
+const Scene = ({ }) => {
 	const gltf = useGLTF("/models/entrance.glb")
 	return (
 		<>
@@ -27,8 +27,10 @@ const Player = ({ gameplayState = "Active" }) => {
 
 	const velocity = new THREE.Vector3()
 	const maxVelocity = 3 // Adjust this value to set maximum speed
-
-	const initialRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI)
+	const entranceDirection = new THREE.Vector3(0, 0, -1);
+	const playerDirection = new THREE.Vector3(0, 0, 1);
+	const rotationAngle = playerDirection.angleTo(entranceDirection);
+	const initialRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), rotationAngle)
 	useEffect(() => {
 		const canvas = document.querySelector("canvas")
 		if (canvas) {
