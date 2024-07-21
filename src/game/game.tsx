@@ -3,7 +3,7 @@ import { Canvas, useFrame } from "@react-three/fiber"
 import { Physics, RigidBody } from "@react-three/rapier"
 import React, { Suspense, useEffect, useRef, useState } from "react"
 import * as THREE from "three"
-import Coordinates from "../ui/coordinates"
+import Hud from "../ui/hud"
 import Dialog from "../ui/dialog"
 import DarkSky from "./dark-sky"
 import FirstPersonCamera from "./fpp-camera"
@@ -197,7 +197,7 @@ const Game: React.FC<GameProps> = ({}) => {
 
 	return (
 		<div className="game flex flex-col h-screen w-full">
-			<Coordinates position={playerPosition} />
+			<Hud position={playerPosition} showPosition />
 			{elements}
 			<KeyboardControls
 				map={[
