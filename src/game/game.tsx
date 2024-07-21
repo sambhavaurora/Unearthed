@@ -1,7 +1,7 @@
-import { Environment, KeyboardControls, OrbitControls, useGLTF, useKeyboardControls } from "@react-three/drei"
-import { Canvas, useFrame, useThree } from "@react-three/fiber"
-import { Physics, RigidBody, useRapier } from "@react-three/rapier"
-import React, { Suspense, useEffect, useRef } from "react"
+import { Environment, KeyboardControls, useGLTF, useKeyboardControls } from "@react-three/drei"
+import { Canvas, useFrame } from "@react-three/fiber"
+import { Physics, RigidBody } from "@react-three/rapier"
+import React, { Suspense, useEffect, useRef, useState } from "react"
 import * as THREE from "three"
 import Coordinates from "../ui/coordinates"
 import DarkSky from "./dark-sky"
@@ -34,7 +34,7 @@ interface GameProps {
 }
 const Scene = ({}) => {
 	const gltf = useGLTF("/models/entrance.glb")
-	
+
 	return (
 		<>
 			<RigidBody type="fixed" position={[0, -10, 0]} colliders="trimesh">
@@ -43,10 +43,9 @@ const Scene = ({}) => {
 		</>
 	)
 }
-const Player = ({ gameplayState = "Active", onPositionUpdate = (p0: THREE.Vector3) => {} }) => {
+const Player = ({ gameplayState = "Active", onPositionUpdate = (_p0: THREE.Vector3) => {} }) => {
 	const playerRef = useRef<any>()
 	const [, getKeys] = useKeyboardControls()
-	
 	const Events: Event[] = [
 		{
 			range: [new THREE.Vector3(17, -13, -22), new THREE.Vector3(24, -11, -16)],
@@ -55,7 +54,8 @@ const Player = ({ gameplayState = "Active", onPositionUpdate = (p0: THREE.Vector
 			},
 		},
 	]
-	
+	const [activeEvents, setActiveEvents] = useState<boolean[]>(new Array(Events.length).fill(false))
+
 	const velocity = new THREE.Vector3()
 	const maxVelocity = 3
 	useEffect(() => {
@@ -67,10 +67,9 @@ const Player = ({ gameplayState = "Active", onPositionUpdate = (p0: THREE.Vector
 		}
 	}, [playerRef.current])
 
-	useFrame((state, delta) => {
+	useFrame((state) => {
 		if (gameplayState === "Active" && playerRef.current) {
 			const { forward, backward, left, right, jump } = getKeys()
-			const speed = 50 * delta
 
 			// Reset velocity
 			velocity.set(0, 0, 0)
@@ -110,15 +109,19 @@ const Player = ({ gameplayState = "Active", onPositionUpdate = (p0: THREE.Vector
 			const playerPosition = playerRef.current.translation()
 			onPositionUpdate(new THREE.Vector3(playerPosition.x, playerPosition.y, playerPosition.z))
 
-			// map over events and run the callback only one time if the condition is true by storing the range check in a variable
-			Events.map((event) => {
-				const isInRange = isBetween(event.range[0], event.range[1], playerPosition)
-				let hasRun = false
-				if (isInRange && !hasRun) {
+			// Check events
+			const newActiveEvents = Events.map((event, index) => {
+				const isInRegion = isBetween(event.range[0], event.range[1], playerPosition)
+			
+				if (isInRegion && !activeEvents[index]) {
+					// Player just entered the region
 					event.callback()
-					hasRun = true
 				}
+			
+				return isInRegion
 			})
+
+			setActiveEvents(newActiveEvents)
 		}
 	})
 
@@ -158,7 +161,7 @@ const Lights = () => {
 	)
 }
 
-const Game: React.FC<GameProps> = ({ onExit }) => {
+const Game: React.FC<GameProps> = ({ }) => {
 	const [gameplayState, setGameplayState] = React.useState<GameplayState>("Active")
 	const [playerPosition, setPlayerPosition] = React.useState(new THREE.Vector3())
 
