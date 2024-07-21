@@ -9,9 +9,24 @@ import FirstPersonCamera from "./fpp-camera"
 
 type GameplayState = "Active" | "Paused" | "GameOver"
 
+interface Event {
+	range: [THREE.Vector3, THREE.Vector3]
+	callback: Function
+}
+
 const isBetween = (a: THREE.Vector3, b: THREE.Vector3, target: THREE.Vector3): boolean => {
-	const [min, max] = [a, b].sort((a, b) => a.distanceTo(target) - b.distanceTo(target))
-	return target.distanceTo(min) + target.distanceTo(max) === min.distanceTo(max)
+	const minX = Math.min(a.x, b.x)
+	const maxX = Math.max(a.x, b.x)
+	const minY = Math.min(a.y, b.y)
+	const maxY = Math.max(a.y, b.y)
+	const minZ = Math.min(a.z, b.z)
+	const maxZ = Math.max(a.z, b.z)
+
+	return (
+		target.x >= minX && target.x <= maxX
+		&& target.y >= minY && target.y <= maxY
+		&& target.z >= minZ && target.z <= maxZ
+	)
 }
 
 interface GameProps {
@@ -19,6 +34,7 @@ interface GameProps {
 }
 const Scene = ({}) => {
 	const gltf = useGLTF("/models/entrance.glb")
+	
 	return (
 		<>
 			<RigidBody type="fixed" position={[0, -10, 0]} colliders="trimesh">
@@ -30,7 +46,16 @@ const Scene = ({}) => {
 const Player = ({ gameplayState = "Active", onPositionUpdate = (p0: THREE.Vector3) => {} }) => {
 	const playerRef = useRef<any>()
 	const [, getKeys] = useKeyboardControls()
-
+	
+	const Events: Event[] = [
+		{
+			range: [new THREE.Vector3(17, -13, -22), new THREE.Vector3(24, -11, -16)],
+			callback: () => {
+				console.log("You Win!")
+			},
+		},
+	]
+	
 	const velocity = new THREE.Vector3()
 	const maxVelocity = 3
 	useEffect(() => {
@@ -69,7 +94,7 @@ const Player = ({ gameplayState = "Active", onPositionUpdate = (p0: THREE.Vector
 			if (right) velocity.add(cameraRight)
 
 			if (velocity.length() > 0) {
-				velocity.normalize().multiplyScalar(maxVelocity)
+				velocity.normalize().multiplyScalar(maxVelocity * 2)
 			}
 
 			// Apply the velocity
@@ -85,16 +110,13 @@ const Player = ({ gameplayState = "Active", onPositionUpdate = (p0: THREE.Vector
 			const playerPosition = playerRef.current.translation()
 			onPositionUpdate(new THREE.Vector3(playerPosition.x, playerPosition.y, playerPosition.z))
 
-			// check if the player is in between [17, -13, -19] and [24, -13, -19] and console log "You Win!" if true
-			if (
-				isBetween(
-					new THREE.Vector3(17, -13, -19),
-					new THREE.Vector3(24, -13, -19),
-					new THREE.Vector3(playerPosition.x, playerPosition.y, playerPosition.z),
-				)
-			) {
-				console.log("You Win!")
-			}
+			// map over events and run the callback only one time if the condition is true by storing the range check in a variable
+			Events.map((event) => {
+				const isInRange = isBetween(event.range[0], event.range[1], playerPosition)
+				if (isInRange) {
+					event.callback()
+				}
+			})
 		}
 	})
 
