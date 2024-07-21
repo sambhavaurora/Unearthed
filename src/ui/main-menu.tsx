@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useEffect, useRef, useState } from "react"
 
 interface MainMenuProps {
 	onNewGame: Function
@@ -7,14 +7,21 @@ interface MainMenuProps {
 }
 
 const MainMenu: React.FC<MainMenuProps> = ({ onNewGame, onCredits, onExit }) => {
+	const audioRef = useRef<HTMLAudioElement>(null)
+
 	const MenuItems: Record<string, Function> = {
-		"New Game": onNewGame,
+		"New Game": () => {
+			audioRef.current?.play()
+			onNewGame()
+		},
 		"Credits": onCredits,
-		"Exit": onExit,
+		"Exit": onExit
 	}
+
 	return (
 		<div className="flex flex-col gap-24 justify-center items-center w-full h-full fade-in">
-			<img src="/ui/unearthed_logo.png" className="h-16   md:h-32 logo" />
+			<audio src="/sfx/menu.mp3" loop muted ref={audioRef} />
+			<img src="/ui/unearthed_logo.png" className="h-16 md:h-32 logo" />
 			<div className="flex flex-col text-2xl">
 				{Object.keys(MenuItems).map((item, index) => (
 					<button

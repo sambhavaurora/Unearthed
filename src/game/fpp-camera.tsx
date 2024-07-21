@@ -6,12 +6,12 @@ const FirstPersonCamera = ({ playerRef, onPositionUpdate }: { playerRef: React.M
 	const { camera } = useThree()
 	const pitchRef = useRef(new THREE.Object3D())
 	const yawRef = useRef(new THREE.Object3D())
-	const cameraOffset = new THREE.Vector3(0, 0.65, 0)
+	const cameraOffset = new THREE.Vector3(0, 1.5, 0)
 
 	useEffect(() => {
 		const handleMouseMove = (event: MouseEvent) => {
 			if (document.pointerLockElement) {
-				const sensitivity = 0.0015
+				const sensitivity = 0.002
 				yawRef.current.rotation.y -= event.movementX * sensitivity
 				pitchRef.current.rotation.x -= event.movementY * sensitivity
 				pitchRef.current.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitchRef.current.rotation.x))
