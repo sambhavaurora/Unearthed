@@ -3,10 +3,11 @@ import { Canvas, useFrame } from "@react-three/fiber"
 import { Physics, RigidBody } from "@react-three/rapier"
 import React, { Suspense, useEffect, useRef, useState } from "react"
 import * as THREE from "three"
-import Hud from "../ui/hud"
 import Dialog from "../ui/dialog"
+import Hud from "../ui/hud"
 import DarkSky from "./dark-sky"
 import FirstPersonCamera from "./fpp-camera"
+import Spider from "./spider"
 
 type GameplayState = "Active" | "Paused" | "GameOver"
 
@@ -14,6 +15,9 @@ interface Event {
 	range: [THREE.Vector3, THREE.Vector3]
 	callback: Function
 }
+
+type KeyboardControlsState = "forward" | "backward" | "left" | "right" | "jump" | "interact"
+type KeyboardState = { [K in KeyboardControlsState]: boolean }
 
 const isBetween = (a: THREE.Vector3, b: THREE.Vector3, target: THREE.Vector3): boolean => {
 	const minX = Math.min(a.x, b.x)
@@ -56,10 +60,12 @@ const Player = ({
 	setElements: React.Dispatch<React.SetStateAction<React.ReactNode[]>>
 }) => {
 	const playerRef = useRef<any>()
-	const [, getKeys] = useKeyboardControls()
+	const [, getKeys] = useKeyboardControls<KeyboardControlsState>()
+	const [isFrozen, setIsFrozen] = useState(false)
 	const [globalState, setGlobalState] = useState({
-		hasEnteredFacility: false
+		hasEnteredFacility: false,
 	})
+	const [isInInteractionZone, setIsInInteractionZone] = useState(false)
 
 	const Events: Event[] = [
 		{
@@ -84,25 +90,45 @@ const Player = ({
 		{
 			range: [new THREE.Vector3(-11, -15, 4), new THREE.Vector3(-1, -11, -7)],
 			callback: () => {
-				if(!globalState.hasEnteredFacility) {
+				if (!globalState.hasEnteredFacility) {
 					setElements(() => {
 						const newElements = [
 							<Dialog>
-								<b>rumbles</b><span className="w-8">{" "}</span><i>[The Door behind you caves in!]</i>
+								<b>rumbles</b>
+								<span className="w-8">{" "}</span>
+								<i>[The Door behind you caves in!]</i>
 							</Dialog>,
 						]
-	
+
 						setTimeout(() => {
 							setElements([])
 						}, 5000)
-	
+
 						return newElements
 					})
 
 					setGlobalState({ hasEnteredFacility: true })
 				}
-			}
-		}
+			},
+		},
+		{
+			range: [new THREE.Vector3(-4, -15, -4), new THREE.Vector3(-1, -11, -7)],
+			callback: () => {
+				setElements(() => {
+					const newElements = [
+						<Dialog>
+							<i>[You found a key!]</i>
+						</Dialog>,
+					]
+
+					setTimeout(() => {
+						setElements([])
+					}, 5000)
+
+					return newElements
+				})
+			},
+		},
 	]
 	const [activeEvents, setActiveEvents] = useState<boolean[]>(new Array(Events.length).fill(false))
 
@@ -137,10 +163,12 @@ const Player = ({
 			cameraRight.normalize()
 
 			// Calculate move direction relative to camera
-			if (forward) velocity.add(cameraForward)
-			if (backward) velocity.sub(cameraForward)
-			if (left) velocity.sub(cameraRight)
-			if (right) velocity.add(cameraRight)
+			if (!isFrozen) {
+				if (forward) velocity.add(cameraForward)
+				if (backward) velocity.sub(cameraForward)
+				if (left) velocity.sub(cameraRight)
+				if (right) velocity.add(cameraRight)
+			}
 
 			// Normalize velocity
 			if (velocity.length() > 0) {
@@ -150,15 +178,21 @@ const Player = ({
 
 			// Update player position
 			const playerPosition = playerRef.current.translation()
-			onPositionUpdate(new THREE.Vector3(playerPosition.x, playerPosition.y, playerPosition.z))
-
-			// Check events
 			const newActiveEvents = Events.map((event, index) => {
 				const isInRegion = isBetween(event.range[0], event.range[1], playerPosition)
 
-				if (isInRegion && !activeEvents[index]) {
-					// Player just entered the region
-					event.callback()
+				if (isInRegion) {
+					if (index === 2) { // This is the third event (index 2)
+						setIsInInteractionZone(true)
+						const keys = getKeys() as KeyboardState
+						if (keys.interact) {
+							event.callback(getKeys, playerPosition, state.camera)
+						}
+					} else if (!activeEvents[index]) {
+						event.callback(getKeys, playerPosition, state.camera)
+					}
+				} else if (index === 2) {
+					setIsInInteractionZone(false)
 				}
 
 				return isInRegion
@@ -209,6 +243,7 @@ const Game: React.FC<GameProps> = ({}) => {
 	const [gameplayState] = React.useState<GameplayState>("Active")
 	const [playerPosition, setPlayerPosition] = React.useState(new THREE.Vector3())
 	const [elements, setElements] = useState<React.ReactNode[]>([])
+	const playerRef = useRef<any>()
 
 	const handlePositionUpdate = (position: THREE.Vector3) => {
 		setPlayerPosition(position)
@@ -225,6 +260,7 @@ const Game: React.FC<GameProps> = ({}) => {
 					{ name: "left", keys: ["ArrowLeft", "a", "A"] },
 					{ name: "right", keys: ["ArrowRight", "d", "D"] },
 					{ name: "jump", keys: ["Space"] },
+					{ name: "interact", keys: ["f", "F"] },
 				]}
 			>
 				<Canvas camera={{ fov: 90 }} className="fade-in">
@@ -232,6 +268,7 @@ const Game: React.FC<GameProps> = ({}) => {
 						<Physics debug gravity={[0, -9.8, 0]}>
 							<Scene />
 							<Player gameplayState={gameplayState} onPositionUpdate={handlePositionUpdate} setElements={setElements} />
+							<Spider playerRef={playerRef} />
 							<Environment preset="night" />
 							<fog attach="fog" args={["#001020", -10, 10]} />
 							<ambientLight intensity={2.5} />

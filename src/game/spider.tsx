@@ -1,61 +1,60 @@
-import React, { useRef, useEffect } from 'react'
-import { useFrame } from '@react-three/fiber'
-import { useGLTF } from '@react-three/drei'
-import { RigidBody, CuboidCollider, useRapier } from '@react-three/rapier'
-import * as THREE from 'three'
+import { useGLTF } from "@react-three/drei"
+import { useFrame } from "@react-three/fiber"
+import { RigidBody } from "@react-three/rapier"
+import { useEffect, useRef } from "react"
+import * as YUKA from "yuka"
 
-const Spider = ({ playerRef }) => {
-  const spiderRef = useRef()
-  const { rapier, world } = useRapier()
-  const spiderModel = useGLTF('/models/spider.glb') // Assume we have a spider model
+import React from "react"
 
-  const rayOrigin = new THREE.Vector3()
-  const rayDirection = new THREE.Vector3()
+type SpiderProps = {
+	playerRef: React.RefObject<any>
+}
 
-  useFrame((state, delta) => {
-    if (!spiderRef.current || !playerRef.current) return
+const Spider: React.FC<SpiderProps> = ({ playerRef }) => {
+	const spiderRef = useRef<any>()
+	const { scene } = useGLTF("/models/spider.gltf")
+	const vehicleRef = useRef(new YUKA.Vehicle())
+	const targetRef = useRef(new YUKA.GameEntity())
 
-    const spiderPosition = spiderRef.current.translation()
-    const playerPosition = playerRef.current.translation()
+	useEffect(() => {
+		const vehicle = vehicleRef.current
+		const target = targetRef.current
 
-    // Calculate direction to player
-    rayDirection.subVectors(playerPosition, spiderPosition).normalize()
+		const entityManager = new YUKA.EntityManager()
+		entityManager.add(vehicle)
 
-    // Set up the ray for collision detection
-    rayOrigin.copy(spiderPosition)
-    const rayLength = 5
+		const seekBehavior = new YUKA.SeekBehavior(target.position)
+		vehicle.steering.add(seekBehavior)
 
-    // Perform the raycast
-    const ray = new rapier.Ray(rayOrigin, rayDirection)
-    const hit = world.castRay(ray, rayLength, true)
+		vehicle.setRenderComponent(spiderRef, (entity) => {
+			// @ts-ignore
+			spiderRef.current.setNextKinematicTranslation(entity.position)
+			// @ts-ignore
+			spiderRef.current.setNextKinematicRotation(entity.rotation)
+		})
 
-    if (!hit) {
-      // Move towards player if no obstacle
-      const newPosition = new THREE.Vector3(
-        spiderPosition.x + rayDirection.x * delta * 2,
-        spiderPosition.y,
-        spiderPosition.z + rayDirection.z * delta * 2
-      )
-      spiderRef.current.setNextKinematicTranslation(newPosition)
+		return () => {
+			entityManager.clear()
+		}
+	}, [])
 
-      // Rotate to face player
-      const angle = Math.atan2(rayDirection.x, rayDirection.z)
-      spiderRef.current.setNextKinematicRotation(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), angle))
-    }
+	useFrame((_state, delta) => {
+		if (playerRef.current && targetRef.current && vehicleRef.current) {
+			const playerPosition = playerRef.current.translation()
+			targetRef.current.position.set(playerPosition.x, 0, playerPosition.z)
 
-    // Check for attack range
-    if (spiderPosition.distanceTo(playerPosition) < 2) {
-      // Implement attack logic here
-      console.log('Spider attacks!')
-    }
-  })
+			const distance = vehicleRef.current.position.distanceTo(targetRef.current.position)
+			vehicleRef.current.maxSpeed = Math.min(5, distance)
 
-  return (
-    <RigidBody ref={spiderRef} type="kinematicPosition" colliders={false} position={[0, 0, 5]}>
-      <CuboidCollider args={[0.5, 0.5, 0.5]} />
-      <primitive object={spiderModel.scene} scale={0.5} />
-    </RigidBody>
-  )
+			vehicleRef.current.update(delta)
+		}
+	})
+
+	return (
+		<RigidBody ref={spiderRef} type="kinematicPosition" position={[-32, -15.5, -1]}>
+			<primitive object={scene} scale={0.5} />
+		</RigidBody>
+	)
 }
 
 export default Spider

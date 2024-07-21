@@ -6,7 +6,7 @@ const FirstPersonCamera = ({ playerRef, onPositionUpdate }: { playerRef: React.M
 	const { camera } = useThree()
 	const pitchRef = useRef(new THREE.Object3D())
 	const yawRef = useRef(new THREE.Object3D())
-	const cameraOffset = new THREE.Vector3(0, 1.5, 0)
+	const cameraOffset = new THREE.Vector3(0, 0.65, 0)
 
 	useEffect(() => {
 		const handleMouseMove = (event: MouseEvent) => {
