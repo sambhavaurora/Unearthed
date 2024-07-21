@@ -4,6 +4,7 @@ import { Physics, RigidBody } from "@react-three/rapier"
 import React, { Suspense, useEffect, useRef, useState } from "react"
 import * as THREE from "three"
 import Coordinates from "../ui/coordinates"
+import Dialog from "../ui/dialog"
 import DarkSky from "./dark-sky"
 import FirstPersonCamera from "./fpp-camera"
 
@@ -32,25 +33,55 @@ const isBetween = (a: THREE.Vector3, b: THREE.Vector3, target: THREE.Vector3): b
 interface GameProps {
 	onExit: Function
 }
+
 const Scene = ({}) => {
 	const gltf = useGLTF("/models/entrance.glb")
 
 	return (
 		<>
-			<RigidBody type="fixed" position={[0, -10, 0]} colliders="trimesh">
+			<RigidBody type="fixed" position={[0, -9.5, 0]} colliders="trimesh">
 				<primitive object={gltf.scene} scale={1} />
 			</RigidBody>
 		</>
 	)
 }
-const Player = ({ gameplayState = "Active", onPositionUpdate = (_p0: THREE.Vector3) => {} }) => {
+
+const Player = ({
+	gameplayState = "Active",
+	onPositionUpdate = (_p0: THREE.Vector3) => {},
+	setElements,
+}: {
+	gameplayState: GameplayState
+	onPositionUpdate: (p0: THREE.Vector3) => void
+	setElements: React.Dispatch<React.SetStateAction<React.ReactNode[]>>
+}) => {
 	const playerRef = useRef<any>()
 	const [, getKeys] = useKeyboardControls()
+
 	const Events: Event[] = [
 		{
 			range: [new THREE.Vector3(17, -13, -22), new THREE.Vector3(24, -11, -16)],
 			callback: () => {
 				console.log("You Win!")
+			},
+		},
+		{
+			range: [new THREE.Vector3(34, -19, 21), new THREE.Vector3(40, -15, 13)],
+			callback: () => {
+				console.log("You Lose!")
+				setElements(() => {
+					const newElements = [
+						<Dialog>
+							Meow! I'm a cat. I'm stuck in this box. Can you help me get out?
+						</Dialog>,
+					]
+
+					setTimeout(() => {
+						setElements([])
+					}, 5000)
+
+					return newElements
+				})
 			},
 		},
 	]
@@ -67,7 +98,7 @@ const Player = ({ gameplayState = "Active", onPositionUpdate = (_p0: THREE.Vecto
 		}
 	}, [playerRef.current])
 
-	useFrame((state) => {
+	useFrame((state, delta) => {
 		if (gameplayState === "Active" && playerRef.current) {
 			const { forward, backward, left, right, jump } = getKeys()
 
@@ -92,18 +123,11 @@ const Player = ({ gameplayState = "Active", onPositionUpdate = (_p0: THREE.Vecto
 			if (left) velocity.sub(cameraRight)
 			if (right) velocity.add(cameraRight)
 
+			// Normalize velocity
 			if (velocity.length() > 0) {
-				velocity.normalize().multiplyScalar(maxVelocity * 2)
+				velocity.normalize().multiplyScalar(maxVelocity * 40 * delta)
 			}
-
-			// Apply the velocity
-			const currentVel = playerRef.current.linvel()
-			playerRef.current.setLinvel({ x: velocity.x, y: currentVel.y, z: velocity.z })
-
-			// Handle jumping
-			if (jump && Math.abs(currentVel.y) < 0.05) {
-				playerRef.current.setLinvel({ x: currentVel.x, y: 5, z: currentVel.z })
-			}
+			playerRef.current.setLinvel({ x: velocity.x, y: playerRef.current.linvel().y, z: velocity.z })
 
 			// Update player position
 			const playerPosition = playerRef.current.translation()
@@ -112,12 +136,12 @@ const Player = ({ gameplayState = "Active", onPositionUpdate = (_p0: THREE.Vecto
 			// Check events
 			const newActiveEvents = Events.map((event, index) => {
 				const isInRegion = isBetween(event.range[0], event.range[1], playerPosition)
-			
+
 				if (isInRegion && !activeEvents[index]) {
 					// Player just entered the region
 					event.callback()
 				}
-			
+
 				return isInRegion
 			})
 
@@ -130,12 +154,13 @@ const Player = ({ gameplayState = "Active", onPositionUpdate = (_p0: THREE.Vecto
 			<RigidBody
 				ref={playerRef}
 				colliders="ball"
-				position={[-32, 1, 0]}
+				position={[-32, -15.5, -1]} // Raised slightly
 				mass={1}
-				rotation={new THREE.Euler(0, Math.PI, 0)}
+				friction={0.2} // Add some friction
+				restitution={0.2} // Add some bounciness
 			>
 				<mesh>
-					<capsuleGeometry args={[0.5, 1, 4, 8]} />
+					<capsuleGeometry args={[0.4, 0.8, 4, 8]} /> // Slightly smaller
 					<meshStandardMaterial color="blue" />
 				</mesh>
 			</RigidBody>
@@ -161,9 +186,10 @@ const Lights = () => {
 	)
 }
 
-const Game: React.FC<GameProps> = ({ }) => {
+const Game: React.FC<GameProps> = ({}) => {
 	const [gameplayState, setGameplayState] = React.useState<GameplayState>("Active")
 	const [playerPosition, setPlayerPosition] = React.useState(new THREE.Vector3())
+	const [elements, setElements] = useState<React.ReactNode[]>([])
 
 	const handlePositionUpdate = (position: THREE.Vector3) => {
 		setPlayerPosition(position)
@@ -172,6 +198,7 @@ const Game: React.FC<GameProps> = ({ }) => {
 	return (
 		<div className="game flex flex-col h-screen w-full">
 			<Coordinates position={playerPosition} />
+			{elements}
 			<KeyboardControls
 				map={[
 					{ name: "forward", keys: ["ArrowUp", "w", "W"] },
@@ -181,11 +208,11 @@ const Game: React.FC<GameProps> = ({ }) => {
 					{ name: "jump", keys: ["Space"] },
 				]}
 			>
-				<Canvas camera={{ fov: 90 }}>
+				<Canvas camera={{ fov: 90 }} className="fade-in">
 					<Suspense fallback={null}>
-						<Physics>
+						<Physics debug gravity={[0, -9.8, 0]}>
 							<Scene />
-							<Player gameplayState={gameplayState} onPositionUpdate={handlePositionUpdate} />
+							<Player gameplayState={gameplayState} onPositionUpdate={handlePositionUpdate} setElements={setElements} />
 							<Environment preset="night" />
 							<fog attach="fog" args={["#001020", -10, 10]} />
 							<ambientLight intensity={2.5} />

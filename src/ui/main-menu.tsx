@@ -1,5 +1,4 @@
 import React from "react"
-import Dialog from "./ui/dialog"
 
 interface MainMenuProps {
 	onNewGame: Function

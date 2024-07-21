@@ -3,42 +3,72 @@
 @tailwind utilities;
 
 body {
-  margin: 0px;
-  padding: 0px;
-  height: 100vh;
-  width: 100vw;
-  display: flex;
-  flex-direction: column;
-  font-family: "Ikonic";
-  background-color: #161616;
-  color: #fff;
+	margin: 0px;
+	padding: 0px;
+	height: 100vh;
+	width: 100vw;
+	display: flex;
+	flex-direction: column;
+	font-family: "Ikonic";
+	background-color: #161616;
+	color: #fff;
 }
 
 @font-face {
-  font-family: "Ikonic";
-  src: url("/ui/ikonic.ttf");
+	font-family: "Ikonic";
+	src: url("/ui/ikonic.ttf");
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+	from {
+		opacity: 0;
+	}
+
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes dialogFadeIn {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+
+@keyframes dialogFadeOut {
+	0%, 75% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
 }
 
 .fade-in {
-  animation: fadeIn 2.5s ease-in-out;
+	animation: fadeIn 2.5s ease-in-out;
 }
 
 .logo {
-  image-rendering: pixelated;
+	image-rendering: pixelated;
 }
 
 .menu-button:hover {
-  background-image: url("/ui/text_selection.png");
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
-  image-rendering: pixelated;
+	background-image: url("/ui/text_selection.png");
+	background-repeat: no-repeat;
+	background-size: 100% 100%;
+	image-rendering: pixelated;
+}
+
+.dialog {
+	background-image: url("/ui/dialog.png");
+	background-repeat: repeat-x;
+	background-size: 100% 100%;
+	image-rendering: pixelated;
+}
+
+.dialog-fade {
+	animation: 5s dialogFadeOut, 0.25s dialogFadeIn;
 }

@@ -1,9 +1,9 @@
 import "./index.css"
 import React, { useState } from "react"
 import { createRoot } from "react-dom/client"
-import Credits from "./credits"
+import Credits from "./ui/credits.tsx"
 import Game from "./game/game.tsx"
-import MainMenu from "./mainMenu.tsx"
+import MainMenu from "./ui/main-menu.tsx"
 
 type GameState = "menu" | "playing" | "credits"
 

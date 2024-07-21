@@ -13,7 +13,7 @@ const CreditData: Record<string, string[]> = {
 
 const Credits: React.FC<CreditsProps> = ({ onBack }) => {
 	return (
-		<div className="credits flex flex-col items-center justify-between gap-8 p-16 md:p-32 h-[100vh]">
+		<div className="credits flex flex-col items-center justify-between gap-8 p-16 md:p-32 h-[100vh] fade-in">
 			<h1 className="font-bold text-3xl">Credits</h1>
 			<div className="flex flex-col gap-4">
 				{Object.keys(CreditData).map((category) => (
