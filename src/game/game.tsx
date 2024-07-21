@@ -113,8 +113,10 @@ const Player = ({ gameplayState = "Active", onPositionUpdate = (p0: THREE.Vector
 			// map over events and run the callback only one time if the condition is true by storing the range check in a variable
 			Events.map((event) => {
 				const isInRange = isBetween(event.range[0], event.range[1], playerPosition)
-				if (isInRange) {
+				let hasRun = false
+				if (isInRange && !hasRun) {
 					event.callback()
+					hasRun = true
 				}
 			})
 		}
