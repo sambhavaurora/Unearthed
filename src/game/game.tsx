@@ -80,7 +80,7 @@ const Model = ({ gameplayState = "Active" }) => {
 			<RigidBody type="fixed" position={[0, -10, 0]} colliders="trimesh">
 				<primitive object={gltf.scene} scale={1} />
 			</RigidBody>
-			<RigidBody ref={playerRef} colliders="ball" position={[0, 1, 0]} mass={1}>
+			<RigidBody ref={playerRef} colliders="ball" position={[-32, 1, 0]} mass={1}>
 				<mesh>
 					<capsuleGeometry args={[0.5, 1, 4, 8]} />
 					<meshStandardMaterial color="blue" />
@@ -124,10 +124,10 @@ const Game: React.FC<GameProps> = ({ onExit }) => {
 			>
 				<Canvas camera={{ position: [0, 5, 10], fov: 90 }}>
 					<Suspense fallback={null}>
-						<Physics>
+						<Physics debug>
 							<Model gameplayState={gameplayState} />
 							<Environment preset="night" />
-							<fog attach="fog" args={["#001020", -10, 50]} />
+							<fog attach="fog" args={["#001020", -25, 50]} />
 							<ambientLight intensity={1} />
 							{/* <pointLight position={[0, 100, 0]} castShadow /> */}
 						</Physics>
