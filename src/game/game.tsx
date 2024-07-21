@@ -11,9 +11,17 @@ type GameplayState = "Active" | "Paused" | "GameOver"
 interface GameProps {
 	onExit: Function
 }
-
-const Model = ({ gameplayState = "Active" }) => {
-	const gltf = useGLTF("/models/entrance.glb")
+const Scene = ({ }) => {
+	const gltf = useGLTF("/models/entrance.glb");
+	return (
+		<>
+			<RigidBody type="fixed" position={[0, -10, 0]} colliders="trimesh">
+				<primitive object={gltf.scene} scale={1} />
+			</RigidBody>
+		</>
+	)
+}
+const Player = ({ gameplayState = "Active" }) => {
 	const playerRef = useRef<any>()
 	const [, getKeys] = useKeyboardControls()
 
@@ -77,9 +85,6 @@ const Model = ({ gameplayState = "Active" }) => {
 
 	return (
 		<>
-			<RigidBody type="fixed" position={[0, -10, 0]} colliders="trimesh">
-				<primitive object={gltf.scene} scale={1} />
-			</RigidBody>
 			<RigidBody ref={playerRef} colliders="ball" position={[0, 1, 0]} mass={1}>
 				<mesh>
 					<capsuleGeometry args={[0.5, 1, 4, 8]} />
@@ -125,7 +130,8 @@ const Game: React.FC<GameProps> = ({ onExit }) => {
 				<Canvas camera={{ position: [0, 5, 10], fov: 90 }}>
 					<Suspense fallback={null}>
 						<Physics>
-							<Model gameplayState={gameplayState} />
+							<Scene />
+							<Player gameplayState={gameplayState} />
 							<Environment preset="night" />
 							<fog attach="fog" args={["#001020", -10, 50]} />
 							<ambientLight intensity={1} />
