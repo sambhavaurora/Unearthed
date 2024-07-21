@@ -4,35 +4,30 @@ import { Physics, RigidBody, useRapier } from "@react-three/rapier"
 import React, { Suspense, useEffect, useRef } from "react"
 import * as THREE from "three"
 import DarkSky from "./dark-sky"
+import FirstPersonCamera from "./fpp-camera"
 
 type GameplayState = "Active" | "Paused" | "GameOver"
 
 interface GameProps {
 	onExit: Function
 }
-const FirstPersonCamera = ({ playerRef }: { playerRef: React.MutableRefObject<any> }) => {
-	const { camera } = useThree()
-	const cameraOffset = new THREE.Vector3(0, 1.5, 0) // Adjust this to change camera height
-
-	useFrame(() => {
-		if (playerRef.current) {
-			const playerPosition = playerRef.current.translation()
-			camera.position.copy(new THREE.Vector3(playerPosition.x, playerPosition.y, playerPosition.z)).add(cameraOffset)
-
-		}
-	})
-
-	return null
-}
 
 const Model = ({ gameplayState = "Active" }) => {
 	const gltf = useGLTF("/models/entrance.glb")
-	const gltf2 = useGLTF("/models/scene.gltf")
 	const playerRef = useRef<any>()
 	const [, getKeys] = useKeyboardControls()
 
 	const velocity = new THREE.Vector3()
 	const maxVelocity = 3 // Adjust this value to set maximum speed
+
+	useEffect(() => {
+		const canvas = document.querySelector("canvas")
+		if (canvas) {
+			canvas.addEventListener("click", () => {
+				canvas.requestPointerLock()
+			})
+		}
+	}, [])
 
 	useFrame((state, delta) => {
 		if (gameplayState === "Active" && playerRef.current) {
@@ -48,14 +43,18 @@ const Model = ({ gameplayState = "Active" }) => {
 			const cameraForward = new THREE.Vector3(0, 0, -1).applyQuaternion(cameraQuat)
 			const cameraRight = new THREE.Vector3(1, 0, 0).applyQuaternion(cameraQuat)
 
+			// Remove vertical component for movement
+			cameraForward.y = 0
+			cameraRight.y = 0
+			cameraForward.normalize()
+			cameraRight.normalize()
+
 			// Calculate move direction relative to camera
 			if (forward) velocity.add(cameraForward)
 			if (backward) velocity.sub(cameraForward)
 			if (left) velocity.sub(cameraRight)
 			if (right) velocity.add(cameraRight)
 
-			// Remove vertical component and normalize
-			velocity.y = 0
 			if (velocity.length() > 0) {
 				velocity.normalize().multiplyScalar(maxVelocity)
 			}
@@ -68,6 +67,11 @@ const Model = ({ gameplayState = "Active" }) => {
 			if (jump && Math.abs(currentVel.y) < 0.05) {
 				playerRef.current.setLinvel({ x: currentVel.x, y: 5, z: currentVel.z })
 			}
+
+			// Rotate the player to face the camera direction
+			const lookAtVector = new THREE.Vector3(cameraForward.x, 0, cameraForward.z).normalize()
+			const playerRotation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), lookAtVector)
+			playerRef.current.setRotation(playerRotation)
 		}
 	})
 
@@ -77,10 +81,10 @@ const Model = ({ gameplayState = "Active" }) => {
 				<primitive object={gltf.scene} scale={1} />
 			</RigidBody>
 			<RigidBody ref={playerRef} colliders="ball" position={[0, 1, 0]} mass={1}>
-				<mesh visible={false}>
-					<sphereGeometry args={[0.5]} />
+				<mesh>
+					<capsuleGeometry args={[0.5, 1, 4, 8]} />
+					<meshStandardMaterial color="blue" />
 				</mesh>
-				<primitive object={gltf2.scene} scale={0.4} />
 			</RigidBody>
 			<FirstPersonCamera playerRef={playerRef} />
 		</>
@@ -120,7 +124,7 @@ const Game: React.FC<GameProps> = ({ onExit }) => {
 			>
 				<Canvas camera={{ position: [0, 5, 10], fov: 90 }}>
 					<Suspense fallback={null}>
-						<Physics debug>
+						<Physics>
 							<Model gameplayState={gameplayState} />
 							<Environment preset="night" />
 							<fog attach="fog" args={["#001020", -10, 50]} />
