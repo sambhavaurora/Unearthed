@@ -3,15 +3,21 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber"
 import { Physics, RigidBody, useRapier } from "@react-three/rapier"
 import React, { Suspense, useEffect, useRef } from "react"
 import * as THREE from "three"
+import Coordinates from "../ui/coordinates"
 import DarkSky from "./dark-sky"
 import FirstPersonCamera from "./fpp-camera"
 
 type GameplayState = "Active" | "Paused" | "GameOver"
 
+const isBetween = (a: THREE.Vector3, b: THREE.Vector3, target: THREE.Vector3): boolean => {
+	const [min, max] = [a, b].sort((a, b) => a.distanceTo(target) - b.distanceTo(target))
+	return target.distanceTo(min) + target.distanceTo(max) === min.distanceTo(max)
+}
+
 interface GameProps {
 	onExit: Function
 }
-const Scene = ({ }) => {
+const Scene = ({}) => {
 	const gltf = useGLTF("/models/entrance.glb")
 	return (
 		<>
@@ -21,7 +27,7 @@ const Scene = ({ }) => {
 		</>
 	)
 }
-const Player = ({ gameplayState = "Active" }) => {
+const Player = ({ gameplayState = "Active", onPositionUpdate = (p0: THREE.Vector3) => {} }) => {
 	const playerRef = useRef<any>()
 	const [, getKeys] = useKeyboardControls()
 
@@ -34,8 +40,6 @@ const Player = ({ gameplayState = "Active" }) => {
 				canvas.requestPointerLock()
 			})
 		}
-
-
 	}, [playerRef.current])
 
 	useFrame((state, delta) => {
@@ -76,18 +80,39 @@ const Player = ({ gameplayState = "Active" }) => {
 			if (jump && Math.abs(currentVel.y) < 0.05) {
 				playerRef.current.setLinvel({ x: currentVel.x, y: 5, z: currentVel.z })
 			}
+
+			// Update player position
+			const playerPosition = playerRef.current.translation()
+			onPositionUpdate(new THREE.Vector3(playerPosition.x, playerPosition.y, playerPosition.z))
+
+			// check if the player is in between [17, -13, -19] and [24, -13, -19] and console log "You Win!" if true
+			if (
+				isBetween(
+					new THREE.Vector3(17, -13, -19),
+					new THREE.Vector3(24, -13, -19),
+					new THREE.Vector3(playerPosition.x, playerPosition.y, playerPosition.z),
+				)
+			) {
+				console.log("You Win!")
+			}
 		}
 	})
 
 	return (
 		<>
-			<RigidBody ref={playerRef} colliders="ball" position={[-32, 1, 0]} mass={1} rotation={new THREE.Euler(0, Math.PI, 0)}>
+			<RigidBody
+				ref={playerRef}
+				colliders="ball"
+				position={[-32, 1, 0]}
+				mass={1}
+				rotation={new THREE.Euler(0, Math.PI, 0)}
+			>
 				<mesh>
 					<capsuleGeometry args={[0.5, 1, 4, 8]} />
 					<meshStandardMaterial color="blue" />
 				</mesh>
 			</RigidBody>
-			<FirstPersonCamera playerRef={playerRef} />
+			<FirstPersonCamera playerRef={playerRef} onPositionUpdate={onPositionUpdate} />
 		</>
 	)
 }
@@ -111,9 +136,15 @@ const Lights = () => {
 
 const Game: React.FC<GameProps> = ({ onExit }) => {
 	const [gameplayState, setGameplayState] = React.useState<GameplayState>("Active")
+	const [playerPosition, setPlayerPosition] = React.useState(new THREE.Vector3())
+
+	const handlePositionUpdate = (position: THREE.Vector3) => {
+		setPlayerPosition(position)
+	}
 
 	return (
 		<div className="game flex flex-col h-screen w-full">
+			<Coordinates position={playerPosition} />
 			<KeyboardControls
 				map={[
 					{ name: "forward", keys: ["ArrowUp", "w", "W"] },
@@ -123,15 +154,14 @@ const Game: React.FC<GameProps> = ({ onExit }) => {
 					{ name: "jump", keys: ["Space"] },
 				]}
 			>
-				<Canvas camera={{ position: [0, 5, 10], fov: 90 }}>
+				<Canvas camera={{ fov: 90 }}>
 					<Suspense fallback={null}>
-						<Physics debug>
+						<Physics>
 							<Scene />
-							<Player gameplayState={gameplayState} />
+							<Player gameplayState={gameplayState} onPositionUpdate={handlePositionUpdate} />
 							<Environment preset="night" />
 							<fog attach="fog" args={["#001020", -10, 10]} />
 							<ambientLight intensity={2.5} />
-							{/* <pointLight position={[0, 100, 0]} castShadow /> */}
 						</Physics>
 					</Suspense>
 					<DarkSky />

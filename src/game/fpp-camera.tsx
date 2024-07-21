@@ -2,7 +2,7 @@ import { useFrame, useThree } from "@react-three/fiber"
 import React, { useEffect, useRef } from "react"
 import * as THREE from "three"
 
-const FirstPersonCamera = ({ playerRef }: { playerRef: React.MutableRefObject<any> }) => {
+const FirstPersonCamera = ({ playerRef, onPositionUpdate }: { playerRef: React.MutableRefObject<any>, onPositionUpdate: Function }) => {
 	const { camera } = useThree()
 	const pitchRef = useRef(new THREE.Object3D())
 	const yawRef = useRef(new THREE.Object3D())
@@ -29,6 +29,8 @@ const FirstPersonCamera = ({ playerRef }: { playerRef: React.MutableRefObject<an
 			yawRef.current.position.set(playerPosition.x, playerPosition.y, playerPosition.z)
 			camera.position.copy(yawRef.current.position).add(cameraOffset)
 			camera.quaternion.setFromEuler(new THREE.Euler(pitchRef.current.rotation.x, yawRef.current.rotation.y, 0, "YXZ"))
+
+			onPositionUpdate(camera.position.clone())
 		}
 	})
 
