@@ -67,8 +67,7 @@ const FollowCamera = ({ target }: { target: React.MutableRefObject<any> }) => {
 }
 
 const Model = ({ gameplayState = "Active" }) => {
-	const gltf = useGLTF("/models/meow.glb")
-	const gltf2 = useGLTF("/models/scene.gltf")
+	const gltf = useGLTF("/models/entrance.glb")
 	const rigidBodyRef = useRef<any>()
 	const [, getKeys] = useKeyboardControls()
 
@@ -111,7 +110,6 @@ const Model = ({ gameplayState = "Active" }) => {
 				<primitive object={gltf.scene} scale={2}  />
 			</RigidBody>
 			<RigidBody ref={rigidBodyRef} colliders="cuboid" position={[0, 1, 0]}>
-				<primitive object={gltf2.scene} scale={1} />
 			</RigidBody>
 			{/* <FollowCamera target={rigidBodyRef} /> */}
 		</>
@@ -151,7 +149,7 @@ const Game: React.FC<GameProps> = ({ onExit }) => {
 			>
 				<Canvas camera={{ position: [0, 5, 10], fov: 90 }}>
 					<Suspense fallback={null}>
-						<Physics debug>
+						<Physics>
 							<Model gameplayState={gameplayState} />
 							<Environment preset="night" />
 							<fog attach="fog" args={["#001020", -5, 50]} />
